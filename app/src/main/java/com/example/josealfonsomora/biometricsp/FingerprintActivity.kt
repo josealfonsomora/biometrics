@@ -1,37 +1,39 @@
 package com.example.josealfonsomora.biometricsp
 
 import android.annotation.SuppressLint
+import android.content.DialogInterface
+import android.hardware.biometrics.BiometricPrompt
 import android.os.Bundle
-import android.support.v4.hardware.fingerprint.FingerprintManagerCompat
-import android.support.v4.os.CancellationSignal
+import android.os.CancellationSignal
 import android.support.v7.app.AppCompatActivity
-import android.view.View
 import kotlinx.android.synthetic.main.activity_fingerprint.*
 
 @SuppressLint("SetTextI18n")
 class FingerprintActivity : AppCompatActivity() {
 
-    val cancellationSignal = CancellationSignal()
 
-    val callback = object : FingerprintManagerCompat.AuthenticationCallback() {
+    private val cancellationSignal = CancellationSignal()
+
+    // DONT DO THIS: BiometricPrompt requires API 28 it will crash if you try in a device with API <
+    private val callback = object : BiometricPrompt.AuthenticationCallback() {
         override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
             super.onAuthenticationError(errorCode, errString)
-            fingerPrintCallback.text = "Error Code: $errorCode = $errString"
+            fingerPrintCallback.text = "Error code: $errorCode = $errString"
         }
 
-        override fun onAuthenticationSucceeded(result: FingerprintManagerCompat.AuthenticationResult?) {
+        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
             super.onAuthenticationSucceeded(result)
             fingerPrintCallback.text = "onAuthenticationSucceeded"
         }
 
         override fun onAuthenticationHelp(helpCode: Int, helpString: CharSequence?) {
             super.onAuthenticationHelp(helpCode, helpString)
-            fingerPrintCallback.text = "Help Code: $helpCode = $helpString"
+            fingerPrintCallback.text = "Help code: $helpCode = $helpString"
         }
 
         override fun onAuthenticationFailed() {
             super.onAuthenticationFailed()
-            fingerPrintCallback.text = "Authentication failed"
+            fingerPrintCallback.text = "onAuthenticationFailed"
         }
     }
 
@@ -43,27 +45,26 @@ class FingerprintActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        val fingerprintManager = FingerprintManagerCompat.from(this)
-//        val fingerprintManager = getSystemService(FingerprintManagerCompat::class.java)
-        fingerprintManager.isHardwareDetected
-
-        fingerprintManager.hasEnrolledFingerprints()
-
-        cancelFingerprint.setOnClickListener {
-            cancellationSignal.cancel()
-        }
-
         fingerprint.setOnClickListener {
             fingerPrintCallback.text = "Listening.."
-            cancelFingerprint.visibility = View.VISIBLE
 
-            fingerprintManager.authenticate(
-                null, // cryptoObject
-                0, // should be 0
-                cancellationSignal, // cancel listener
-                callback, // FingerprintManagerCompat.AuthenticationCallback()
-                null // Handler to run callbacks
+            biometricPrompt().authenticate(
+                cancellationSignal,
+                mainExecutor,
+                callback
             )
         }
     }
+
+
+    private fun biometricPrompt() = BiometricPrompt
+        .Builder(this)
+        .setTitle("title")
+        .setSubtitle("subTitle")
+        .setDescription("description")
+        .setNegativeButton(
+            "Cancel",
+            mainExecutor,
+            DialogInterface.OnClickListener { _, _ -> fingerPrintCallback.text = "description" })
+        .build()
 }
