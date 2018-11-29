@@ -1,9 +1,9 @@
 package com.example.josealfonsomora.biometricsp
 
 import android.annotation.SuppressLint
-import android.hardware.fingerprint.FingerprintManager
 import android.os.Bundle
-import android.os.CancellationSignal
+import android.support.v4.hardware.fingerprint.FingerprintManagerCompat
+import android.support.v4.os.CancellationSignal
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import kotlinx.android.synthetic.main.activity_fingerprint.*
@@ -13,13 +13,13 @@ class FingerprintActivity : AppCompatActivity() {
 
     val cancellationSignal = CancellationSignal()
 
-    val callback = object : FingerprintManager.AuthenticationCallback() {
+    val callback = object : FingerprintManagerCompat.AuthenticationCallback() {
         override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
             super.onAuthenticationError(errorCode, errString)
             fingerPrintCallback.text = "Error Code: $errorCode = $errString"
         }
 
-        override fun onAuthenticationSucceeded(result: FingerprintManager.AuthenticationResult?) {
+        override fun onAuthenticationSucceeded(result: FingerprintManagerCompat.AuthenticationResult?) {
             super.onAuthenticationSucceeded(result)
             fingerPrintCallback.text = "onAuthenticationSucceeded"
         }
@@ -43,8 +43,8 @@ class FingerprintActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        val fingerprintManager = getSystemService(FingerprintManager::class.java)
-
+        val fingerprintManager = FingerprintManagerCompat.from(this)
+//        val fingerprintManager = getSystemService(FingerprintManagerCompat::class.java)
         fingerprintManager.isHardwareDetected
 
         fingerprintManager.hasEnrolledFingerprints()
@@ -59,9 +59,9 @@ class FingerprintActivity : AppCompatActivity() {
 
             fingerprintManager.authenticate(
                 null, // cryptoObject
-                cancellationSignal, // cancel listener
                 0, // should be 0
-                callback, // FingerprintManager.AuthenticationCallback()
+                cancellationSignal, // cancel listener
+                callback, // FingerprintManagerCompat.AuthenticationCallback()
                 null // Handler to run callbacks
             )
         }
